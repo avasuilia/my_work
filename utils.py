@@ -70,23 +70,23 @@ class Image_data:
         return img, img2, domain
 
     def preprocess(self):
-        # for domain in self.domain_list:
-        #   image_list = glob(os.path.join(self.dataset_path, domain) + '/*.wav')
-        #   for i in range(len(image_list)):
-        #     y,sr=librosa.load(path=image_list[i], sr=16000)
-        #     M=librosa.feature.melspectrogram(y=y, sr=sr, n_mels=hops, n_fft=6*hops,hop_length=hops,win_length=6*hops)
-        #     M=M.T
-        #     if(M.shape[0]<hops):
-        #       N=np.zeros((M.shape[1]-M.shape[0],hops), dtype=np.float32)
-        #       M=np.concatenate([M,N],axis=0)
-        #     else:
-        #       M=M[0:hops]
-        #     M=librosa.power_to_db(M.T)-ref_level_db
-        #     self.mdict[str(image_list[i])]=normalize(M)
-        pickle_off = open ("datafile5.txt", "rb")
-        self.mdict = pickle.load(pickle_off)
-        # with open('datafile5.txt', 'wb') as fh:
-        #   pickle.dump(self.mdict, fh)
+        for domain in self.domain_list:
+          image_list = glob(os.path.join(self.dataset_path, domain) + '/*.wav')
+          for i in range(len(image_list)):
+            y,sr=librosa.load(path=image_list[i], sr=16000)
+            M=librosa.feature.melspectrogram(y=y, sr=sr, n_mels=hops, n_fft=6*hops,hop_length=hops,win_length=6*hops)
+            M=M.T
+            if(M.shape[0]<hops):
+              N=np.zeros((M.shape[1]-M.shape[0],hops), dtype=np.float32)
+              M=np.concatenate([M,N],axis=0)
+            else:
+              M=M[0:hops]
+            M=librosa.power_to_db(M.T)-ref_level_db
+            self.mdict[str(image_list[i])]=normalize(M)
+        # pickle_off = open ("datafile5.txt", "rb")
+        # self.mdict = pickle.load(pickle_off)
+        with open('datafile5.txt', 'wb') as fh:
+          pickle.dump(self.mdict, fh)
         for idx, domain in enumerate(self.domain_list):
             image_list = glob(os.path.join(self.dataset_path, domain) + '/*.wav')
             shuffle_list = random.sample(image_list, len(image_list))
