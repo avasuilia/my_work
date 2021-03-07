@@ -9,7 +9,7 @@ Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 """
 
 from ops import *
-from tensorflow.keras import Sequential,Model
+from tensorflow.keras import Sequential,Model,Layer
 from tensorflow.keras.layers import Input, Dense, Reshape, Flatten, Concatenate, Conv2D, Conv2DTranspose, GlobalAveragePooling2D, UpSampling2D, LeakyReLU, ReLU, Add, Multiply, Lambda, Dot, BatchNormalization, Activation, ZeroPadding2D, Cropping2D, Cropping1D
 from tensorflow.keras.initializers import TruncatedNormal, he_normal
 # from tensorflow
