@@ -144,7 +144,7 @@ class StarGAN_v2():
             self.not_start=0
 
             """ Network """
-            self.generator = Generator(name='Generator',self.img_size,self.img_ch,self.style_dim)
+            self.generator = Generator('Generator',self.img_size,self.img_ch,self.style_dim)
             self.mapping_network = MappingNetwork(self.style_dim, self.hidden_dim, self.num_domains, sn=False, name='MappingNetwork')
             self.style_encoder = StyleEncoder(self.img_size, self.style_dim, self.num_domains, max_conv_dim=self.hidden_dim, sn=False, name='StyleEncoder')
             self.discriminator = Discriminator(self.img_size, self.num_domains, max_conv_dim=self.hidden_dim, sn=self.sn, name='Discriminator')
@@ -200,7 +200,7 @@ class StarGAN_v2():
         else:
             """ Test """
             """ Network """
-            self.generator_ema = Generator(name='Generator',self.img_size,self.img_ch,self.style_dim)
+            self.generator_ema = Generator('Generator',self.img_size,self.img_ch,self.style_dim)
             self.mapping_network_ema = MappingNetwork(self.style_dim, self.hidden_dim, self.num_domains, sn=False, name='MappingNetwork')
             self.style_encoder_ema = StyleEncoder(self.img_size, self.style_dim, self.num_domains, max_conv_dim=self.hidden_dim, sn=False, name='StyleEncoder')
 
