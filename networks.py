@@ -276,14 +276,14 @@ class AdaIN(Layer):
         image = inputs[0]
         if len(inputs) == 2:
             style = inputs[1]
-            style_mean, style_var = ktf.nn.moments(style, self.spatial_axis, keep_dims=True)
+            style_mean, style_var = tf.nn.moments(style, self.spatial_axis, keep_dims=True)
         else:
-            style_mean = ktf.expand_dims(ktf.expand_dims(inputs[1], self.spatial_axis[0]), self.spatial_axis[1])
-            style_var = ktf.expand_dims(ktf.expand_dims(inputs[2], self.spatial_axis[0]), self.spatial_axis[1])
-        image_mean, image_var = ktf.nn.moments(image, self.spatial_axis, keep_dims=True)
-        out = ktf.nn.batch_normalization(image, image_mean,
+            style_mean = tf.expand_dims(tf.expand_dims(inputs[1], self.spatial_axis[0]), self.spatial_axis[1])
+            style_var = tf.expand_dims(tf.expand_dims(inputs[2], self.spatial_axis[0]), self.spatial_axis[1])
+        image_mean, image_var = tf.nn.moments(image, self.spatial_axis, keep_dims=True)
+        out = tf.nn.batch_normalization(image, image_mean,
                                          image_var, style_mean,
-                                         ktf.sqrt(style_var), self.eps)
+                                         tf.sqrt(style_var), self.eps)
         return out
 
     def get_config(self):
