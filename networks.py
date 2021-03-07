@@ -263,34 +263,114 @@ def Siamese(name,img_size,img_ch):
     g11=Dense(128)(g4)
     return Model(inp,g11,name=name)
 
-class AdaIN(Layer):
-    def __init__(self, data_format=None, eps=1e-7, **kwargs):
-        super(AdaIN, self).__init__(**kwargs)
-        self.data_format = conv_utils.normalize_data_format(data_format)
-        self.spatial_axis = [1, 2] #if self.data_format == 'channels_last' else [2, 3]
+def Flatten(x=None, name='flatten'):
+
+    if x is None:
+        return tf.keras.layers.Flatten(name=name)
+    else :
+        return tf.keras.layers.Flatten(name=name)(x)
+
+class SpectralNormalization(tf.keras.layers.Wrapper):
+    def __init__(self, layer, iteration=1, eps=1e-12, training=True, **kwargs):
+        self.iteration = iteration
         self.eps = eps
+        self.do_power_iteration = training
+        if not isinstance(layer, tf.keras.layers.Layer):
+            raise ValueError(
+                'Please initialize `TimeDistributed` layer with a '
+                '`Layer` instance. You passed: {input}'.format(input=layer))
+        super(SpectralNormalization, self).__init__(layer, **kwargs)
 
-    def compute_output_shape(self, input_shape):
-        return input_shape[0]
+    def build(self, input_shape=None):
+        self.layer.build(input_shape)
 
-    def call(self, inputs):
-        image = inputs[0]
-        if len(inputs) == 2:
-            style = inputs[1]
-            style_mean, style_var = tf.nn.moments(style, 1, keepdims=True)
+        self.w = self.layer.kernel
+        self.w_shape = self.w.shape.as_list()
+
+        self.u = self.add_weight(shape=(1, self.w_shape[-1]),
+                                 initializer=tf.initializers.TruncatedNormal(stddev=0.02),
+                                 trainable=False,
+                                 name=self.name + '_u',
+                                 dtype=tf.float32, aggregation=tf.VariableAggregation.ONLY_FIRST_REPLICA)
+
+        super(SpectralNormalization, self).build()
+
+    def call(self, inputs, training=None, mask=None):
+        self.update_weights()
+        output = self.layer(inputs)
+        return output
+
+    def update_weights(self):
+        w_reshaped = tf.reshape(self.w, [-1, self.w_shape[-1]])
+
+        u_hat = self.u
+        v_hat = None
+
+        if self.do_power_iteration:
+            for _ in range(self.iteration):
+                v_ = tf.matmul(u_hat, tf.transpose(w_reshaped))
+                v_hat = v_ / (tf.reduce_sum(v_ ** 2) ** 0.5 + self.eps)
+
+                u_ = tf.matmul(v_hat, w_reshaped)
+                u_hat = u_ / (tf.reduce_sum(u_ ** 2) ** 0.5 + self.eps)
+
+        sigma = tf.matmul(tf.matmul(v_hat, w_reshaped), tf.transpose(u_hat))
+        self.u.assign(u_hat)
+
+        self.layer.kernel.assign(self.w / sigma)
+
+class FullyConnected(tf.keras.layers.Layer):
+    def __init__(self, units, use_bias=True, sn=False, name='FullyConnected'):
+        super(FullyConnected, self).__init__(name=name)
+        self.units = units
+        self.use_bias = use_bias
+        self.sn = sn
+
+        if self.sn:
+            self.fc = SpectralNormalization(tf.keras.layers.Dense(self.units,
+                                                                  kernel_initializer=weight_initializer,
+                                                                  kernel_regularizer=weight_regularizer_fully,
+                                                                  use_bias=self.use_bias), name='sn_' + self.name)
         else:
-            style_mean = tf.expand_dims(tf.expand_dims(inputs[1], self.spatial_axis[0]), self.spatial_axis[1])
-            style_var = tf.expand_dims(tf.expand_dims(inputs[2], self.spatial_axis[0]), self.spatial_axis[1])
-        image_mean, image_var = tf.nn.moments(image, self.spatial_axis, keepdims=True)
-        out = tf.nn.batch_normalization(image, image_mean,
-                                         image_var, style_mean,
-                                         tf.sqrt(style_var), self.eps)
-        return out
+            self.fc = tf.keras.layers.Dense(self.units,
+                                            kernel_initializer=weight_initializer,
+                                            kernel_regularizer=weight_regularizer_fully,
+                                            use_bias=self.use_bias, name=self.name)
 
-    def get_config(self):
-        config = {'eps': self.eps}
-        base_config = super(AdaIN, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+    def call(self, x, training=None, mask=None):
+        x = Flatten(x)
+        x = self.fc(x)
+
+        return x
+
+class AdaIN(tf.keras.layers.Layer):
+    def __init__(self, shape, sn=False, epsilon=1e-5, name='AdaIN'):
+        super(AdaIN, self).__init__(name=name)
+        self.shape = shape
+        self.epsilon = epsilon
+
+        self.gamma_fc = FullyConnected(units=tf.experimental.numpy.prod(self.shape[1:]), use_bias=True, sn=sn)
+        self.beta_fc = FullyConnected(units=tf.experimental.numpy.prod(self.shape[1:]), use_bias=True, sn=sn)
+
+
+    def call(self, x_init, training=True, mask=None):
+        x, style = x_init
+        x_mean, x_var = tf.nn.moments(x, axes=[1, 2], keepdims=True)
+        x_std = tf.sqrt(x_var + self.epsilon)
+
+        x_norm = ((x - x_mean) / x_std)
+
+        gamma = self.gamma_fc(style)
+        beta = self.beta_fc(style)
+
+        self.shape[0]=-1
+        gamma = tf.reshape(gamma, shape=self.shape)
+        beta = tf.reshape(beta, shape=self.shape)
+
+        x = (1 + gamma) * x_norm + beta
+
+        return x
+
 
 
 # def Generator(name,img_size, img_ch,style_dim):
@@ -325,9 +405,9 @@ class Generator(tf.keras.Model):
         g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
         #upscaling
         g4 = deconv2d(g3,g2, 256, kernel_size=(1,7), strides=(1,2), bnorm=False)
-        g5 = AdaIN()([g4,inpB])
+        g5 = AdaIN(g4.output_shape,name='AdaIN1')([g4,inpB])
         g6 = deconv2d(g5,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
-        g7 = AdaIN()([g6,inpB])
+        g7 = AdaIN(g6.output_shape,name='AdaIN2')([g6,inpB])
         g8 = ConvSN2DTranspose(1, kernel_size=(self.img_size,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
         return g8
 
