@@ -12,6 +12,7 @@ from ops import *
 from tensorflow.keras import Sequential,Model
 from tensorflow.keras.layers import Layer,Input, Dense, Reshape, Flatten, Concatenate, Conv2D, Conv2DTranspose, GlobalAveragePooling2D, UpSampling2D, LeakyReLU, ReLU, Add, Multiply, Lambda, Dot, BatchNormalization, Activation, ZeroPadding2D, Cropping2D, Cropping1D
 from tensorflow.keras.initializers import TruncatedNormal, he_normal
+import tensorflow.keras.backend as K
 # from tensorflow
 import numpy as np
 
