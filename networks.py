@@ -319,7 +319,7 @@ class Generator(tf.keras.Model):
     def call(self, x_init, training=True, mask=None):
         inpA,inpB=x_init
         g0 = tf.keras.layers.ZeroPadding2D((0,1))(inpA)
-        g1 = conv2d(g0, 256, kernel_size=(img_size,3), strides=1, padding='valid')
+        g1 = conv2d(g0, 256, kernel_size=(self.img_size,3), strides=1, padding='valid')
         g2 = conv2d(g1, 256, kernel_size=(1,9), strides=(1,2))
         g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
         #upscaling
@@ -327,7 +327,7 @@ class Generator(tf.keras.Model):
         g5 = AdaIN()([g4,inpB])
         g6 = deconv2d(g5,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
         g7 = AdaIN()([g6,inpB])
-        g8 = ConvSN2DTranspose(1, kernel_size=(img_size,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
+        g8 = ConvSN2DTranspose(1, kernel_size=(self.img_size,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
         return g8
 
 class MappingNetwork(tf.keras.Model):
