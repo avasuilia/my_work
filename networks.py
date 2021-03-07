@@ -266,7 +266,7 @@ class AdaIN(Layer):
     def __init__(self, data_format=None, eps=1e-7, **kwargs):
         super(AdaIN, self).__init__(**kwargs)
         self.data_format = conv_utils.normalize_data_format(data_format)
-        self.spatial_axis = [1, 2] if self.data_format == 'channels_last' else [2, 3]
+        self.spatial_axis = [1, 2] #if self.data_format == 'channels_last' else [2, 3]
         self.eps = eps
 
     def compute_output_shape(self, input_shape):
@@ -276,11 +276,11 @@ class AdaIN(Layer):
         image = inputs[0]
         if len(inputs) == 2:
             style = inputs[1]
-            style_mean, style_var = tf.nn.moments(style, self.spatial_axis, keep_dims=True)
+            style_mean, style_var = tf.nn.moments(style, self.spatial_axis, keepdims=True)
         else:
             style_mean = tf.expand_dims(tf.expand_dims(inputs[1], self.spatial_axis[0]), self.spatial_axis[1])
             style_var = tf.expand_dims(tf.expand_dims(inputs[2], self.spatial_axis[0]), self.spatial_axis[1])
-        image_mean, image_var = tf.nn.moments(image, self.spatial_axis, keep_dims=True)
+        image_mean, image_var = tf.nn.moments(image, self.spatial_axis, keepdims=True)
         out = tf.nn.batch_normalization(image, image_mean,
                                          image_var, style_mean,
                                          tf.sqrt(style_var), self.eps)
@@ -301,9 +301,9 @@ def Generator(name,img_size, img_ch,style_dim):
     g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
     #upscaling
     g4 = deconv2d(g3,g2, 256, kernel_size=(1,7), strides=(1,2), bnorm=False)
-    g5 = AdaIN(data_format='channels_last')([g4,inpB])
+    g5 = AdaIN()([g4,inpB])
     g6 = deconv2d(g5,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
-    g7 = AdaIN(data_format='channels_last')([g6,inpB])
+    g7 = AdaIN()([g6,inpB])
     g8 = ConvSN2DTranspose(1, kernel_size=(img_size,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
     return Model([inpA,inpB],g8,name=name)
 
