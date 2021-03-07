@@ -276,7 +276,7 @@ class AdaIN(Layer):
         image = inputs[0]
         if len(inputs) == 2:
             style = inputs[1]
-            style_mean, style_var = tf.nn.moments(style, self.spatial_axis, keepdims=True)
+            style_mean, style_var = tf.nn.moments(style, 1, keepdims=True)
         else:
             style_mean = tf.expand_dims(tf.expand_dims(inputs[1], self.spatial_axis[0]), self.spatial_axis[1])
             style_var = tf.expand_dims(tf.expand_dims(inputs[2], self.spatial_axis[0]), self.spatial_axis[1])
