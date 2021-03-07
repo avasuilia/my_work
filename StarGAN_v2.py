@@ -145,7 +145,7 @@ class StarGAN_v2():
 
             """ Network """
             self.generator = Generator('Generator',self.img_size,self.img_ch,self.style_dim)
-            self.generator.summary()
+            
             self.mapping_network = MappingNetwork(self.style_dim, self.hidden_dim, self.num_domains, sn=False, name='MappingNetwork')
             self.style_encoder = StyleEncoder(self.img_size, self.style_dim, self.num_domains, max_conv_dim=self.hidden_dim, sn=False, name='StyleEncoder')
             self.discriminator = Discriminator(self.img_size, self.num_domains, max_conv_dim=self.hidden_dim, sn=self.sn, name='Discriminator')
@@ -169,7 +169,7 @@ class StarGAN_v2():
             _ = self.generator_ema([x, s])
             _ = self.discriminator([x, y])
             _=self.siamese(x)
-
+            self.generator.summary()
 
             """ Optimizer """
             self.g_optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr, beta_1=self.beta1, beta_2=self.beta2, epsilon=1e-08)
