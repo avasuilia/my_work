@@ -317,7 +317,8 @@ class Generator(tf.keras.Model):
         self.style_dim=style_dim
 
     def call(self, x_init, training=True, mask=None):
-        inpA,inpB=x_init
+        inpA=x_init[0]
+        inpB=x_init[1]
         g0 = tf.keras.layers.ZeroPadding2D((0,1))(inpA)
         g1 = conv2d(g0, 256, kernel_size=(self.img_size,3), strides=1, padding='valid')
         g2 = conv2d(g1, 256, kernel_size=(1,9), strides=(1,2))
