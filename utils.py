@@ -70,7 +70,7 @@ class Image_data:
         return img, img2, domain
 
     def preprocess(self):
-        for domain in self.domain_list:
+        # for domain in self.domain_list:
         #   image_list = glob(os.path.join(self.dataset_path, domain) + '/*.wav')
         #   for i in range(len(image_list)):
         #     y,sr=librosa.load(path=image_list[i], sr=16000)
