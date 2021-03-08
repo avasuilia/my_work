@@ -263,9 +263,9 @@ class StarGAN_v2():
             # cycle-consistency loss
             s_org = self.style_encoder([x_real, y_org])
             x_rec = self.generator([x_fake, s_org])
-            g_cyc_loss = self.cyc_weight * L1_loss(x_rec, x_real)
+            # g_cyc_loss = self.cyc_weight * L1_loss(x_rec, x_real)
 
-            regular_loss = regularization_loss(self.generator)
+            # regular_loss = regularization_loss(self.generator)
 
             sa1=self.siamese(x_real)
             sa2=self.siamese(x_fake)
@@ -275,7 +275,7 @@ class StarGAN_v2():
             s_loss=Sia_loss(sa1,sab1)
             t_loss=Tra_loss(sa1,sa2,sab1,sab2)
 
-            g_loss = g_adv_loss + g_sty_loss + g_ds_loss + g_cyc_loss + regular_loss + t_loss
+            g_loss = g_adv_loss + g_sty_loss + g_ds_loss + t_loss
             ss_loss = s_loss + t_loss
 
         g_train_variable = self.generator.trainable_variables
@@ -296,7 +296,7 @@ class StarGAN_v2():
             self.f_optimizer.apply_gradients(zip(f_gradient, f_train_variable))
             self.e_optimizer.apply_gradients(zip(e_gradient, e_train_variable))
 
-        return g_adv_loss, g_sty_loss, g_ds_loss, g_cyc_loss, g_loss
+        return g_adv_loss, g_sty_loss, g_ds_loss, g_loss
 
     @tf.function
     def d_train_step(self, x_real, y_org, y_trg, z_trg=None, x_ref=None):
@@ -317,9 +317,9 @@ class StarGAN_v2():
             if self.gan_type == 'gan-gp':
                 d_adv_loss += self.r1_weight * r1_gp_req(self.discriminator, x_real, y_org)
 
-            regular_loss = regularization_loss(self.discriminator)
+            # regular_loss = regularization_loss(self.discriminator)
 
-            d_loss = d_adv_loss + regular_loss
+            d_loss = d_adv_loss
 
         d_train_variable = self.discriminator.trainable_variables
         d_gradient = d_tape.gradient(d_loss, d_train_variable)
