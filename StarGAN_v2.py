@@ -353,8 +353,8 @@ class StarGAN_v2():
             d_adv_loss_ref, d_loss_ref = self.d_train_step(x_real, y_org, y_trg, x_ref=x_ref)
 
             # update generator
-            g_adv_loss_latent, g_sty_loss_latent, g_ds_loss_latent, g_cyc_loss_latent, g_loss_latent = self.g_train_step(x_real, y_org, y_trg, x_real2, z_trgs=[z_trg, z_trg2])
-            g_adv_loss_ref, g_sty_loss_ref, g_ds_loss_ref, g_cyc_loss_ref, g_loss_ref = self.g_train_step(x_real, y_org, y_trg, x_real2, x_refs=[x_ref, x_ref2])
+            g_adv_loss_latent, g_sty_loss_latent, g_ds_loss_latent, g_loss_latent = self.g_train_step(x_real, y_org, y_trg, x_real2, z_trgs=[z_trg, z_trg2])
+            g_adv_loss_ref, g_sty_loss_ref, g_ds_loss_ref, g_loss_ref = self.g_train_step(x_real, y_org, y_trg, x_real2, x_refs=[x_ref, x_ref2])
 
             # compute moving average of network parameters
             moving_average(self.generator, self.generator_ema, beta=self.ema_decay)
