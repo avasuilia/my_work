@@ -368,8 +368,8 @@ def mod_loss(x,y):
 
 def Tra_loss(sa,sab,sa1,sab1):
   l1 = tf.reduce_mean(((sa-sa1) - (sab-sab1))**2)
-  l2 = tf.reduce_mean(tf.reduce_sum(-(tf.nn.l2_normalize(sa-sa1, axis=[-1]) * tf.nn.l2_normalize(sab-sab1, axis=[-1])), axis=-1))
-  return l1+l2
+#   l2 = tf.reduce_mean(tf.reduce_sum(-(tf.nn.l2_normalize(sa-sa1, axis=[-1]) * tf.nn.l2_normalize(sab-sab1, axis=[-1])), axis=-1))
+  return l1
 
 def Sia_loss(sa,sa1):
   logits = tf.sqrt(tf.reduce_sum((sa-sa1)**2, axis=-1, keepdims=True))
