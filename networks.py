@@ -383,9 +383,9 @@ def Generator(name,img_size, img_ch,style_dim):
     #upscaling
     g4 = deconv2d(g3,g2, 256, kernel_size=(1,7), strides=(1,2), bnorm=False)
     # g5 = AdaIN()([g4,inpB])
-    g6 = deconv2d(g5,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
+    g6 = deconv2d(g4,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
     # g7 = AdaIN()([g6,inpB])
-    g8 = ConvSN2DTranspose(1, kernel_size=(img_size,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
+    g8 = ConvSN2DTranspose(1, kernel_size=(img_size,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g6)
     return Model([inpA,inpB],g8,name=name)
 
 
