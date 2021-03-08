@@ -344,13 +344,14 @@ class FullyConnected(tf.keras.layers.Layer):
         return x
 
 class AdaIN(tf.keras.layers.Layer):
-    def __init__(self, shape, sn=False, epsilon=1e-5, name='AdaIN'):
+    def __init__(self, units,shape, sn=False, epsilon=1e-5, name='AdaIN'):
         super(AdaIN, self).__init__(name=name)
+        self.units=units
         self.shape = shape
         self.epsilon = epsilon
 
-        self.gamma_fc = FullyConnected(units=tf.experimental.numpy.prod(self.shape[1:]), use_bias=True, sn=sn)
-        self.beta_fc = FullyConnected(units=tf.experimental.numpy.prod(self.shape[1:]), use_bias=True, sn=sn)
+        self.gamma_fc = FullyConnected(units=self.units, use_bias=True, sn=sn)
+        self.beta_fc = FullyConnected(units=self.units, use_bias=True, sn=sn)
 
 
     def call(self, x_init, training=True, mask=None):
@@ -363,7 +364,6 @@ class AdaIN(tf.keras.layers.Layer):
         gamma = self.gamma_fc(style)
         beta = self.beta_fc(style)
 
-        self.shape[0]=-1
         gamma = tf.reshape(gamma, shape=self.shape)
         beta = tf.reshape(beta, shape=self.shape)
 
@@ -373,20 +373,20 @@ class AdaIN(tf.keras.layers.Layer):
 
 
 
-def Generator(name,img_size, img_ch,style_dim):
-    inpA=Input(shape=(img_size,img_size,img_ch))
-    inpB=Input(shape=(style_dim,))
-    g0 = tf.keras.layers.ZeroPadding2D((0,1))(inpA)
-    g1 = conv2d(g0, 256, kernel_size=(img_size,3), strides=1, padding='valid')
-    g2 = conv2d(g1, 256, kernel_size=(1,9), strides=(1,2))
-    g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
-    #upscaling
-    g4 = deconv2d(g3,g2, 256, kernel_size=(1,7), strides=(1,2), bnorm=False)
-    # g5 = AdaIN()([g4,inpB])
-    g6 = deconv2d(g4,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
-    # g7 = AdaIN()([g6,inpB])
-    g8 = ConvSN2DTranspose(1, kernel_size=(img_size,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g6)
-    return Model([inpA,inpB],g8,name=name)
+# def Generator(name,img_size, img_ch,style_dim):
+#     inpA=Input(shape=(img_size,img_size,img_ch))
+#     inpB=Input(shape=(style_dim,))
+#     g0 = tf.keras.layers.ZeroPadding2D((0,1))(inpA)
+#     g1 = conv2d(g0, 256, kernel_size=(img_size,3), strides=1, padding='valid')
+#     g2 = conv2d(g1, 256, kernel_size=(1,9), strides=(1,2))
+#     g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
+#     #upscaling
+#     g4 = deconv2d(g3,g2, 256, kernel_size=(1,7), strides=(1,2), bnorm=False)
+#     g5 = AdaIN()([g4,inpB])
+#     g6 = deconv2d(g5,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
+#     g7 = AdaIN()([g6,inpB])
+#     g8 = ConvSN2DTranspose(1, kernel_size=(img_size,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
+#     return Model([inpA,inpB],g8,name=name)
 
 
 # class Generator(tf.keras.Model):
@@ -411,27 +411,63 @@ def Generator(name,img_size, img_ch,style_dim):
 #         g8 = ConvSN2DTranspose(1, kernel_size=(self.img_size,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
 #         return g8
 
-# class Generator(tf.keras.Model):
-#     def __init__(self,name,img_size,img_ch,style_dim):
-#         super(Generator,self).__init__(name=name)
-#         self.img_size=img_size
-#         self.img_ch=img_ch
-#         self.style_dim=style_dim
+class Generator(tf.keras.Model):
+    def __init__(self,name,img_size,img_ch,style_dim):
+        super(Generator,self).__init__(name=name)
+        self.img_size=img_size
+        self.img_ch=img_ch
+        self.style_dim=style_dim
+        self.ConvSN2D_1=(256,kernel_size=(self.img_size,3),strides=1,padding='valid',kernel_initializer=init,use_bias=False)
+        self.ConvSN2D_2=(256,kernel_size=(1,9),strides=(1,2),padding='same',kernel_initializer=init,use_bias=False)
+        self.ConvSN2D_3=(256,kernel_size=(1,7),strides=(1,2),padding='same',kernel_initializer=init,use_bias=False)
+        self.ConvSN2D_4=(256,kernel_size=(1,7),strides=(1,1),padding='same',kernel_initializer=init,use_bias=False)
+        self.ConvSN2D_5=(256,kernel_size=(1,9),strides=(1,1),padding='same',kernel_initializer=init,use_bias=False)
+        # self.ConvSN2DTranspose_1=(256,kernel_size=(1,7),strides=(1,2),kernel_initializer=init,use_bias=False,padding='same')
+        # self.ConvSN2DTranspose_2=(256,kernel_size=(1,9),strides=(1,2),kernel_initializer=init,use_bias=False,padding='same')
+        self.ConvSN2DTranspose_3=(1,kernel_size=(self.img_size,1),strides=(1,1),kernel_initializer=init,padding='valid',activation='tanh')
+        self.AdaIN_1 = AdaIN(49152,[-1,1,96,512],name='AdaIN1')
+        self.AdaIN_2 = AdaIN(98304,[-1,1,192,512],name='AdaIN2')
+        self.BatchNormalization_1=BatchNormalization()
+        self.BatchNormalization_2=BatchNormalization()
+        self.BatchNormalization_3=BatchNormalization()
+        self.LeakyReLU_1=LeakyReLU(alpha=0.2)
+        self.LeakyReLU_2=LeakyReLU(alpha=0.2)
+        self.LeakyReLU_3=LeakyReLU(alpha=0.2)
+        self.LeakyReLU_4=LeakyReLU(alpha=0.2)
+        self.LeakyReLU_5=LeakyReLU(alpha=0.2)
+        self.UpSampling2D_1=UpSampling2D((1,2))
+        self.UpSampling2D_2=UpSampling2D((1,2))
+        self.Concatenate_1=Concatenate()
+        self.Concatenate_2=Concatenate()
+        self.ZeroPadding2D=tf.keras.layers.ZeroPadding2D((0,1))
 
-#     def call(self, x_init, training=True, mask=None):
-#         inpA=x_init[0]
-#         inpB=x_init[1]
-#         g0 = tf.keras.layers.ZeroPadding2D((0,1))(inpA)
-#         g1 = conv2d(g0, 256, kernel_size=(self.img_size,3), strides=1, padding='valid')
-#         g2 = conv2d(g1, 256, kernel_size=(1,9), strides=(1,2))
-#         g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
-#         #upscaling
-#         g4 = deconv2d(g3,g2, 256, kernel_size=(1,7), strides=(1,2), bnorm=False)
-#         # g5 = AdaIN(g4.output_shape,name='AdaIN1')([g4,inpB])
-#         g6 = deconv2d(g4,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
-#         # g7 = AdaIN(g6.output_shape,name='AdaIN2')([g6,inpB])
-#         g8 = ConvSN2DTranspose(1, kernel_size=(self.img_size,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g6)
-#         return g8
+    def call(self, x_init, training=True, mask=None):
+        inpA=x_init[0]
+        inpB=x_init[1]
+        g0 = self.ZeroPadding2D(inpA)
+        g1 = self.ConvSN2D_1(g0)
+        g2 = self.BatchNormalization_1(g1)
+        g3 = self.LeakyReLU_1(g2)
+        g4 = self.ConvSN2D_2(g3)
+        g5 = self.BatchNormalization_2(g4)
+        g6 = self.LeakyReLU_2(g5)
+        g7 = self.ConvSN2D_3(g6)
+        g8 = self.BatchNormalization_3(g7)
+        g9 = self.LeakyReLU_3(g8)
+
+        g10 = self.UpSampling2D_1(g9)
+        g11 = self.ConvSN2D_4(g10)
+        g12 = self.LeakyReLU_4(g11)
+        g13 = self.Concatenate_1([g12,g6])
+        g14 = self.AdaIN_1([g13,inpB])
+        g15 = self.UpSampling2D_2(g14)
+        g16 = self.ConvSN2D_5(g15)
+        g17 = self.LeakyReLU_5(g16)
+        g18 = self.Concatenate_2([g17,g3])
+        g19 = self.AdaIN_2([g18,inpB])
+        g20 = self.ConvSN2DTranspose_3(g19)
+
+        return g20
 
 class MappingNetwork(tf.keras.Model):
     def __init__(self, style_dim=64, hidden_dim=512, num_domains=2, sn=False, name='MappingNetwork'):
