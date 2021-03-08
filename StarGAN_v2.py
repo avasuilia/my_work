@@ -375,13 +375,13 @@ class StarGAN_v2():
                 tf.summary.scalar('g/latent/adv_loss', g_adv_loss_latent, step=idx)
                 tf.summary.scalar('g/latent/sty_loss', g_sty_loss_latent, step=idx)
                 tf.summary.scalar('g/latent/ds_loss', g_ds_loss_latent, step=idx)
-                tf.summary.scalar('g/latent/cyc_loss', g_cyc_loss_latent, step=idx)
+                # tf.summary.scalar('g/latent/cyc_loss', g_cyc_loss_latent, step=idx)
                 tf.summary.scalar('g/latent/loss', g_loss_latent, step=idx)
 
                 tf.summary.scalar('g/ref/adv_loss', g_adv_loss_ref, step=idx)
                 tf.summary.scalar('g/ref/sty_loss', g_sty_loss_ref, step=idx)
                 tf.summary.scalar('g/ref/ds_loss', g_ds_loss_ref, step=idx)
-                tf.summary.scalar('g/ref/cyc_loss', g_cyc_loss_ref, step=idx)
+                # tf.summary.scalar('g/ref/cyc_loss', g_cyc_loss_ref, step=idx)
                 tf.summary.scalar('g/ref/loss', g_loss_ref, step=idx)
 
                 tf.summary.scalar('g/ds_weight', self.ds_weight, step=idx)
