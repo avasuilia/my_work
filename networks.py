@@ -417,14 +417,14 @@ class Generator(tf.keras.Model):
         self.img_size=img_size
         self.img_ch=img_ch
         self.style_dim=style_dim
-        self.ConvSN2D_1=(256,kernel_size=(self.img_size,3),strides=1,padding='valid',kernel_initializer=init,use_bias=False)
-        self.ConvSN2D_2=(256,kernel_size=(1,9),strides=(1,2),padding='same',kernel_initializer=init,use_bias=False)
-        self.ConvSN2D_3=(256,kernel_size=(1,7),strides=(1,2),padding='same',kernel_initializer=init,use_bias=False)
-        self.ConvSN2D_4=(256,kernel_size=(1,7),strides=(1,1),padding='same',kernel_initializer=init,use_bias=False)
-        self.ConvSN2D_5=(256,kernel_size=(1,9),strides=(1,1),padding='same',kernel_initializer=init,use_bias=False)
+        self.ConvSN2D_1=ConvSN2D(256,kernel_size=(self.img_size,3),strides=1,padding='valid',kernel_initializer=init,use_bias=False)
+        self.ConvSN2D_2=ConvSN2D(256,kernel_size=(1,9),strides=(1,2),padding='same',kernel_initializer=init,use_bias=False)
+        self.ConvSN2D_3=ConvSN2D(256,kernel_size=(1,7),strides=(1,2),padding='same',kernel_initializer=init,use_bias=False)
+        self.ConvSN2D_4=ConvSN2D(256,kernel_size=(1,7),strides=(1,1),padding='same',kernel_initializer=init,use_bias=False)
+        self.ConvSN2D_5=ConvSN2D(256,kernel_size=(1,9),strides=(1,1),padding='same',kernel_initializer=init,use_bias=False)
         # self.ConvSN2DTranspose_1=(256,kernel_size=(1,7),strides=(1,2),kernel_initializer=init,use_bias=False,padding='same')
         # self.ConvSN2DTranspose_2=(256,kernel_size=(1,9),strides=(1,2),kernel_initializer=init,use_bias=False,padding='same')
-        self.ConvSN2DTranspose_3=(1,kernel_size=(self.img_size,1),strides=(1,1),kernel_initializer=init,padding='valid',activation='tanh')
+        self.ConvSN2DTranspose_3=ConvSN2DTranspose(1,kernel_size=(self.img_size,1),strides=(1,1),kernel_initializer=init,padding='valid',activation='tanh')
         self.AdaIN_1 = AdaIN(49152,[-1,1,96,512],name='AdaIN1')
         self.AdaIN_2 = AdaIN(98304,[-1,1,192,512],name='AdaIN2')
         self.BatchNormalization_1=BatchNormalization()
